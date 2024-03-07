@@ -26,7 +26,31 @@ class vtexLazyLoad{
     if(!selector){
       return false;
     }
-    return new DOMParser().parseFromString(selector.textContent, "text/html")
+    
+  }
+  getElements(selector){
+    const elements = selector.querySelectorAll(this.element);
+
+    if(elements.length <=0){
+      return false;
+    }
+
+    this.tempElements = [];
+    for(let element of elements){
+      try{
+        this.tempElements.push({
+          dom: new DOMParser().parseFromString(element.textContent, "text/html"),
+          element: element,
+          parent: element.parentElement
+        }) 
+      }catch(err){
+        return false;
+      }
+       
+    }
+
+    return this.tempElements;
+
   }
   setAtributtesOnFiles(element){
     for(const selector of element.querySelectorAll(this.file.selector)){
@@ -38,6 +62,16 @@ class vtexLazyLoad{
     return element;
 
   }
+  applyChangesOnElements(elements){
+    for(const {dom, element, parent} of elements){
+      const changes = this.setAtributtesOnFiles(dom);
+      element.insertAdjacentHTML('afterend', changes.querySelector("body").innerHTML)
+      element.remove();
+
+    }
+
+    return elements;
+  }
   setLazyLoad(selector){
     if(typeof LazyLoad !== 'undefined'){
       this.lazyload = new LazyLoad();
@@ -48,13 +82,11 @@ class vtexLazyLoad{
     const selectors = this.getSelectors();
 
     for(const selector of selectors){
-      const element = this.setAtributtesOnFiles(this.getElement(selector));
-       
-      selector.innerHTML = element.querySelector("body").innerHTML;
+      console.log(selector)
+      this.applyChangesOnElements(this.getElements(selector));
     }
-
     return this.callback(selectors)
   }
 }
 
-const lazy = new vtexLazyLoad();
+new vtexLazyLoad();
